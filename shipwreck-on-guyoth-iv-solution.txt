@@ -1,0 +1,96 @@
+Shipwreck on Guyoth IV
+By Gianluca Girelli
+For Z-code interpreters
+
+Solution by Garry Francis
+----------------------------------------
+This is a minimal solution. You'll need to EXAMINE lots of things for this solution to make sense. Some optional (but significant) commands are shown in parentheses. These can be omitted once you know what to do.
+
+(I) (you're wearing a harness, pressure suit and pressure helmet)
+(EXAMINE HARNESS) (connects static lines to canopy and has quick release device)
+(X DEVICE) (when pushed, it disconnects the static lines)
+(EXAMINE SURVIVAL KIT) (it's connected by a cord)
+(GET IT) (you can't reach it as it hangs well below you)
+(PULL CORD) (you can't reach it, but you can untie it)
+UNTIE CORD (survival kit falls into mist, but now you won't get tangled in tree)
+PRESS DEVICE (you fall to the ground below)
+(X MIST) (you can't find your survival kit, consider it gone)
+E
+GET ROCK
+HIT FLINT WITH ROCK (you create a makeshift knife)
+GET KNIFE
+N
+SEARCH FRAGMENTS (you find a cylindrical metal container)
+GET CYLINDER
+S
+E
+N
+GET SULPHUR
+(X IT) (it has many uses, including making explosives)
+PUT IT IN CYLINDER
+N
+(X RING) (it appears to be a huge nest)
+U
+SEARCH FEATHERS (you find a large egg & a laser pistol)
+GET ALL (laser pistol & egg taken)
+D (you're grabbed by a pterodactyl and drop everything except the laser pistol)
+SHOOT PTERODACTYL WITH PISTOL (it releases you and flies off over the horizon)
+GET PARACHUTE
+D
+E
+E
+N
+N
+U
+GET ALL (rock, knife, cylinder & large egg taken)
+D
+S
+E
+E
+GET CHARCOAL
+(X IT) (you can add it to other materials to produce an explosive)
+PUT IT IN CYLINDER (you now have all the ingredients for gunpowder)
+W
+S
+E
+GET MINERAL
+(X IT) (you recognise it as saltpetre)
+PUT IT IN CYLINDER
+GET SHOCKPROOF CONTAINER
+(OPEN IT) (it contains the specimens you were sent to recover)
+W (a giant spider comes in and blocks the exit)
+SHOOT SPIDER WITH PISTOL (it now lies dead with its abdomen exposed)
+CUT ABDOMEN WITH KNIFE (you find and take a metal plate)
+GET PLATE
+W
+S
+GET FRUITS
+N
+N
+W
+S
+W
+S
+(E) (you need to mount the trisaurus to go that way)
+(MOUNT TRISAURUS) (you need to befriend it first)
+GIVE FRUITS TO TRISAURUS
+MOUNT TRISAURUS
+E
+S
+(E) (the trisaurus can't go that way)
+DISMOUNT TRISAURUS
+E (you fall into a hole full of snakes)
+GIVE EGG TO SNAKES (they start feeding on it and pay no attention to you)
+U
+E
+(E) (the crack is too small to enter)
+PUT CYLINDER IN CRACK
+SHOOT IT WITH PISTOL (it explodes and leaves a big hole in the rock face)
+E
+CUT LINES WITH KNIFE (you now have a rope)
+GET ROPE
+TIE IT TO TREE
+D
+IN
+PUT PLATE IN SLOT
+***THE END***

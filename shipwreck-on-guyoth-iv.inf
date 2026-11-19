@@ -1,0 +1,2584 @@
+!% -~S
+!% $OMIT_UNUSED_ROUTINES=1
+!% $ZCODE_COMPACT_GLOBALS=1
+!% $ZCODE_LESS_DICT_DATA=1
+!% $ZCODE_MAX_INLINE_STRING=9999
+!% $MAX_ABBREVS=96
+!========================================
+! Shipwreck on Guyoth IV
+! Morgan Tyler series #4 of 5
+! Copyright © 2026 Gianluca Girelli
+!========================================
+!Constant DEBUG;
+
+Abbreviate ". ";
+Abbreviate ", ";
+Abbreviate " the ";
+Abbreviate "You";
+Abbreviate "The";
+Abbreviate "you";
+Abbreviate "ing";
+Abbreviate "It's";
+Abbreviate "and";
+Abbreviate "can't";
+Abbreviate "parachute";
+Abbreviate "hat";
+Abbreviate "round";
+Abbreviate "'re";
+Abbreviate "**]";
+Abbreviate " th";
+Abbreviate " to";
+Abbreviate " ha";
+Abbreviate "'s no";
+Abbreviate " an";
+Abbreviate " lo";
+Abbreviate "can";
+Abbreviate " of";
+Abbreviate " with";
+Abbreviate " in";
+Abbreviate "t s";
+Abbreviate " are";
+Abbreviate " already";
+Abbreviate " ne";
+Abbreviate "tion";
+Abbreviate " from";
+Abbreviate " mo";
+Abbreviate " be";
+Abbreviate " ma";
+Abbreviate "trisaurus";
+Abbreviate " on";
+Abbreviate " branches";
+Abbreviate " here";
+Abbreviate "tatic lines";
+Abbreviate "terodactyl";
+Abbreviate " de";
+Abbreviate " ex";
+Abbreviate " proceed";
+Abbreviate " contain";
+Abbreviate " tree";
+Abbreviate "ver";
+Abbreviate ".^^";
+Abbreviate " for";
+Abbreviate " rock";
+Abbreviate " pla";
+Abbreviate " close";
+Abbreviate " re";
+Abbreviate " mi";
+Abbreviate "() ]^";
+Abbreviate " do";
+Abbreviate " open";
+Abbreviate " cha";
+Abbreviate "_to/";
+Abbreviate "wards";
+Abbreviate " is";
+Abbreviate "[ ~";
+Abbreviate " tak";
+Abbreviate "the";
+Abbreviate " no";
+Abbreviate "ake";
+Abbreviate "con";
+Abbreviate " so";
+Abbreviate " see";
+Abbreviate " al";
+Abbreviate "res";
+Abbreviate " su";
+Abbreviate "t w";
+Abbreviate "ave";
+Abbreviate "ind";
+Abbreviate " sho";
+Abbreviate "has";
+Abbreviate "ine";
+Abbreviate "rous";
+Abbreviate "branches";
+Abbreviate "ree";
+Abbreviate "ide";
+Abbreviate "ang";
+Abbreviate " he";
+Abbreviate "t's";
+Abbreviate "rock";
+Abbreviate " eas";
+Abbreviate "pen";
+Abbreviate "racte";
+Abbreviate " cl";
+Abbreviate "ans";
+Abbreviate "ion";
+Abbreviate "reate";
+Abbreviate "'ve";
+Abbreviate " com";
+Abbreviate " like";
+Abbreviate "able";
+
+Constant Story "Shipwreck on Guyoth IV";
+Constant Headline "^Morgan Tyler series #4 of 5^Copyright (c) 2026 Gianluca Girelli^https://bdb-project.itch.io^Type ABOUT for further info and credits.^^";
+
+Array UUID_ARRAY string "UUID://b2f66071-e4c9-48fe-9220-5397dc6d9689//";
+#Ifdef UUID_ARRAY;
+#Endif;
+
+Release 1;
+Serial "191126";
+
+!Inform 6 constants
+Constant DEATH_MENTION_UNDO;
+Constant MAX_CARRIED = 12;
+Constant NO_SCORE;
+
+!PunyInform constants
+Constant CUSTOM_ABBREVIATIONS;
+Constant OPTIONAL_EXTENDED_METAVERBS;
+Constant OPTIONAL_EXTENDED_VERBSET;
+Constant OPTIONAL_FULL_DIRECTIONS;
+Constant OPTIONAL_PROVIDE_UNDO;
+Constant RUNTIME_ERRORS 0;!0 for release, 2 for debug
+
+!PunyInform static messages
+Constant MSG_COMMENT_NO_TRANSCRIPT "Comment recorded. Use SCRIPT ON to save future comments in a transcript.^";
+Constant MSG_COMMENT_TRANSCRIPT "Comment recorded.^";
+Constant MSG_PARSER_NO_INPUT "You need to enter a command.";
+Constant MSG_PARSER_UNKNOWN_VERB "That's not a verb I recognise.";
+Constant MSG_SORRY_DEFAULT "Oh, don't apologise.";
+Constant MSG_WAIT_DEFAULT "Time passes...";
+
+!PunyInform dynamic messages
+Constant MSG_CLOSE_NOT_OPEN 1000;
+Constant MSG_LOCK_ALREADY_LOCKED 1001;
+Constant MSG_LOCK_CLOSE_FIRST 1002;
+Constant MSG_LOCK_KEY_DOESNT_FIT 1003;
+Constant MSG_UNLOCK_ALREADY_UNLOCKED 1004;
+Constant MSG_UNLOCK_KEY_DOESNT_FIT 1005;
+
+!Game-specific constants
+Constant CANT_REACH "if you could reach the knife inside your survival kit, but that's out of reach.";
+Constant NO_DROP "If you drop the it, it will disappear in the thick mist and you won't be able to find it again.";
+Constant PUSH_RELEASE_DEVICE "You push the quick release device, and immediately it disconnects the harness from the static lines. You fall towards the ground";
+Constant YOULL_HAVE_TO_UNTIE_IT_FIRST "If you want to take it, you'll have to untie it first.";
+Constant BRANCHES_ABOVE "You can't climb the tree, as the branches are well above you.";
+Constant CRACK_IN_ROCK "A crack in the rock proceeds eastbound, but it's too small for you to enter.";
+Constant CANT_REMOVE_HARNESS "You can't remove the harness while you're ";
+Constant NEED_PROPER_TOOL "You don't have a proper tool to do it.";
+Constant NEED_TO_MOUNT_TRISAURUS "You need to mount the trisaurus to go that way.";
+
+!Replaced actions
+Replace _UpdateDarkness;
+Replace GoSub; !Delete if diagonal directions are used
+Replace LockSub;
+Replace UnlockSub;
+
+Include "globals.h";
+
+!Game-specific variables
+Attribute passable;   !can be traversed with the rover
+
+!========================================
+! Entry point routines
+!========================================
+[ LibraryMessages p_msg p_arg_1 p_arg_2;
+  switch (p_msg)
+  {
+    MSG_CLOSE_NOT_OPEN:
+      print_ret (CTheyreOrIts)noun, " already closed.";
+    MSG_LOCK_ALREADY_LOCKED:
+      print_ret (CTheyreOrIts)noun, " already locked.";
+    MSG_LOCK_CLOSE_FIRST:
+      "You'll have to close ", (ItOrThem)noun, " first.";
+    MSG_LOCK_KEY_DOESNT_FIT:
+      print_ret (The)second, " ", (DoesntOrDont)second, " fit the lock.";
+    MSG_UNLOCK_ALREADY_UNLOCKED:
+      print_ret (CTheyreOrIts)noun, " already unlocked.";
+    MSG_UNLOCK_KEY_DOESNT_FIT:
+      print_ret (The)second, " ", (DoesntOrDont)second, " fit the lock.";
+    MSG_SMELL_DEFAULT:
+      if (helmet has worn)
+        "The helmet prevents you from smelling the air outside.";
+  }
+  p_arg_1 = p_arg_2;
+];
+
+Include "puny.h";
+
+!========================================
+! Initialisation
+!========================================
+[ Initialise;
+  location = room02;
+  lookmode = 2;
+  !move survival_kit to player;
+  move helmet to player;
+  move suit to player;
+  move harness to player;
+  !move parachute to player;
+  no_implicit_actions = true;
+  player.description = "You are Morgan Tyler, a former citizen of Thalos and now a special agent of the Earth Government. After the events aboard the Discovery, you've been sent to Guyoth IV to retrieve more samples of the virus so that scientists can create a vaccine.";
+  "^The events that took place on the Discovery put your safety at serious risk and, potentially, could have led to the arrival on Earth of an extraterrestrial pathogen capable of wiping out human life on the planet.^^However, the virus samples recovered from the Discovery, identified and analysed using data extracted from the ship's computer and the Captain's log, were enough to pinpoint the virus's origin: Guyoth IV, a small, Earth-like planet still undergoing geological evolution. As a veteran of such missions, you have been tasked with travelling to the Guyoth system to gather further data useful to complete the synthesis of a vaccine, to be used should the need arise.^^You arrived with a small team. Once in orbit, you left them aboard the mothership for support and began your descent in a shuttle. Although you had carefully planned the descent, a sudden shift in weather, driven by the turbulent nature of Guyoth IV's atmosphere, pushed you into a storm zone with intense electrical activity. Struck by lightning and with your systems failing, you had no choice but to pull the ejection lever and entrust your life to your parachute.^^After what felt like an eternity, the winds carried you toward a wooded area, where your parachute became snagged in the canopy of the tallest trees. While you thank your lucky stars for having survived, you look down with apprehension at the ground many metres below. Find a way to get down, complete your mission by recovering more samples, and make your way back to the ship.^";
+];
+
+!========================================
+! Classes
+!========================================
+Class Body
+with
+  life
+  [;
+    Ask:
+      print_ret (The)self, " tell", (SingularS)self, " no tales.";
+    Attack, ThrowAt:
+      "Why? Let ", (the)self, " rest in peace.";
+    Give:
+      "Dead bodies aren't normally in the habit of accepting gifts.";
+    Kiss:
+      "Did you notice the condition of the corpse", (SingularS)self, "? There's something very wrong here. Not that trying to kiss ", (a)self, " is normal.";
+    Show:
+      print_ret (The)self, " show", (SingularS)self, " no interest in ", (the)noun, ". I wonder why?";
+    Talk:
+      "You strike up a conversation with ", (the)self, ", but there's no response.";
+    Tell:
+      print_ret (The)self, " listen", (SingularS)self, " intently to what you have to say. Or maybe not, it's hard to tell.";
+    WakeOther:
+      "You give ", (the)noun, " a shake, but there's no response.";
+  ],
+has animate;
+
+!========================================
+! Inventory
+!========================================
+!----------------------------------------
+! Pressure suit
+!----------------------------------------
+Object suit "pressure suit"
+with
+  name 'pressure' 'suit',
+  description
+  [;
+    print "It's the pressure suit, similar to the one you usually wear during your space travels. This one, though, is much lighter";
+    if (helmet has worn)
+      ". The helmet you are wearing completes the suit.";
+    "";
+  ],
+  before
+  [;
+    Disrobe:
+      "You'd better keep your suit on. You're on an alien planet and you don't know when you may need it.";
+  ],
+has clothing worn;
+
+!----------------------------------------
+! Pressure helmet
+!----------------------------------------
+Object helmet "pressure helmet"
+with
+  name 'pressure' 'helmet',
+  description
+  [;
+    print"The helmet completes the suit and provides full protection ";
+    if (helmet has worn)
+      "now that it's worn.";
+    "once worn.";
+  ],
+  before
+  [;
+    Drop:
+      "You'd better keep it with you. You're on an alien planet and you don't know when you may need it.";
+  ],
+has clothing worn;
+
+!----------------------------------------
+! Harness
+!----------------------------------------
+Object harness "harness" !item08
+with
+  name 'harness',
+  description "It's a harness that connects the static lines to the parachute canopy. It has a quick-release device that allows you to disconnect the static lines from it, thus freeing you from the parachute.",
+  before
+  [;
+    Disrobe: 
+      if (location == room02)
+        print_ret (string)CANT_REMOVE_HARNESS, "hanging from a tree.";
+      if (location == room19)
+        print_ret (string)CANT_REMOVE_HARNESS, "in the pterodactyl's claws.";
+    Drop:
+      if ((location == room01) || (location == room03))
+        print_ret (string)NO_DROP;
+  ],
+  add_to_scope quickrelease,
+has clothing worn;
+
+!----------------------------------------
+! Quick release device
+!----------------------------------------
+Object quickrelease "quick-release device" !item08
+with
+  name 'quick' 'release' 'quick-release' 'device',
+  description "The quick-release device, when pushed, allows you to disconnect the static lines from the parachute canopy, thus freeing you from it.",
+  before
+  [;
+    Push:
+      if (location == room02)
+      {
+        if (survival_kit notin limbo)
+        {
+          deadflag = 1;
+          print_ret (string)PUSH_RELEASE_DEVICE, " with the survival kit still connected to your suit. At a certain point, it gets tangled to one of the tree branches. The momentum turns you upside down, and you hit the ground head first breaking your neck.";
+        }
+        if (helmet hasnt worn)
+        {
+          deadflag = 1;
+          print_ret (string)PUSH_RELEASE_DEVICE, " as branches scratch and pierce your face and neck, severely harming you. By the time you reach the ground, you are injured to death, and pass away soon after.";
+        }
+        print (string)PUSH_RELEASE_DEVICE, ", accelerating as you go, but the branches of the gigantic tree slow your fall and you eventually reach the soft ground mostly unharmed.^^";
+        move parachute to room01;
+        give parachute ~scenery;
+        PlayerTo(room03);
+        rtrue;
+      }
+      "You already disconnected the lines from the parachute. There's no need to keep pushing the quick-release device.";
+  ],
+has scenery;
+
+!========================================
+! Room 1: Top of Tall Tree
+!========================================
+Object room01 "Top of Tall Tree"
+with
+  description "After shooting the huge beast, you landed right on top of the trees. At first the branches bent under your weight, until they clung to you firmly. Now below you, many metres away, you can glimpse the mist-covered ground, frighteningly far away. The only way is down.",
+  d_to
+  [;
+    if (parachute notin player)
+      "You got here by a miracle. It would be wise to take what could prove useful before going down.";
+    print "You slowly descend the tree, until you reach the ground.^^";
+    return room03;
+  ],
+has light;
+
+!----------------------------------------
+! Top of tall tree
+!----------------------------------------
+Object "tall tree" room01
+with
+  name 'top' 'of' 'tall' 'tallest' 'tree',
+  description "You are very far from the ground.",
+has scenery;
+
+!----------------------------------------
+! Trees
+!----------------------------------------
+Object "trees" room01
+with
+  name 'trees',
+  description "There's nothing special about these trees.",
+has scenery pluralname;
+
+!========================================
+! Room 2: Branches of Tall Tree
+!========================================
+Object room02 "Branches of Tall Tree"
+with
+  description 
+  [;
+    print"The sturdy branches of a very tall tree have stopped you in your descent, causing your parachute to get caught. Now you swing, hanging by the static lines connected to the harness you're wearing, while many metres below a low but thick mist covers the ground. ";
+    if (survival_kit notin limbo)
+      "Your survival kit, fixed to your suit with a cord, hangs below you.";
+    "";
+  ],
+has light;
+
+!----------------------------------------
+! Branches of tall tree
+!----------------------------------------
+Object "branches of tall tree" room02
+with
+  name 'sturdy' 'branches' 'of' 'very' 'tall' 'tree',
+  description "The branches are so thick that you could use them to climb down, if you weren't hanging so far from where they rise from the tree.",
+has scenery;
+
+!----------------------------------------
+! Low Thick Mist (floating object)
+!----------------------------------------
+Object "mist"
+with
+  name 'low' 'thick' 'mist',
+  description
+  [;
+    print "The mist covers the ground, and you can't see what's amid it. ";
+    if (location == room03)
+      "If you were searching for your survival kit, consider it gone.";
+    "";
+  ],
+  before
+  [;
+    Smell:
+      "You try to smell the mist, but your sense of smell detects nothing unusual.";
+    Take, Touch: 
+      "You can't touch or take the mist.";
+  ],
+  found_in room01 room02 room03,
+has scenery;
+
+!----------------------------------------
+! Ground
+!----------------------------------------
+Object "ground" 
+with
+  name 'ground',
+  description "You can't see it because it's covered in mist.",
+  found_in room01 room02 room03,
+has scenery;
+
+!----------------------------------------
+! Parachute
+!----------------------------------------
+Object parachute "parachute" room02
+with
+  article "your",
+  name 'parachute' 'chute' 'canopy',
+  description
+  [;
+    if ((location == room01 or room02) && (self notin player))
+      print "The wide canopy of the parachute is entangled in the tree top. ";
+    else
+      print"It's the canopy of your parachute that you retrieved from the tree top. ";
+    if (staticlines hasnt general)
+      "The static lines complete the parachute assembly.";
+    "Now that you cut one the static lines, the parachute is useless and you can discard it, if you like.";
+  ],
+  add_to_scope
+  [;
+    if (staticlines has scenery)
+      PlaceInScope(staticlines);
+  ],
+  before
+  [;
+    Drop:
+      if ((location == room01) || (location == room03))
+        print_ret (string)NO_DROP;
+    Take:
+      if (location == room02)
+        "You can't take the parachute while you are hanging from it.";
+      if (self notin player)
+      {
+        move self to player;
+        if (location == room01)
+          "With all the due caution to avoid a deadly fall, you slowly untangle the parachute and the static lines from the top of the tree. It takes a while, but eventually you succeed and put it all in your inventory.";
+        else
+          "You take the parachute and put it in your inventory.";
+      }
+  ],
+has scenery;
+
+!----------------------------------------
+! Static lines
+!----------------------------------------
+Object staticlines "static lines" !item08
+with
+  name 'static' 'lines' 'strings' 'cords',
+  description
+  [;
+    if (parachute has scenery)
+      "The static lines connect the parachute canopy to the harness.";
+    "The long lines are connected to the parachute canopy.";
+  ],
+  before
+  [;
+    Cut:
+      if (location == room02)
+        "You could cut them ", (string)CANT_REACH;
+      if (self has scenery)
+      {
+        if (knife notin player)
+          print_ret (string)NEED_PROPER_TOOL;
+        if (self has general)
+          "You already cut one of the static lines. You don't need any more of them.";
+        if (second == nothing && knife in player)
+        {
+          print "(with the knife)^";
+          second = knife;
+        }
+        !give self ~scenery;
+        !move self to limbo;
+        give self general;
+        move rope to location;
+        "You cut one of the static lines off the parachute and it falls to the ground. It's a long rope, and may prove useful.";
+      }
+    Take:
+      "You can't take the lines, as they are part of the parachute.";
+  ],
+has scenery pluralname;
+
+!----------------------------------------
+! Survival kit
+!----------------------------------------
+Object survival_kit "survival kit" room02
+with
+  article "a",
+  name 'survival' 'kit',
+  description "It's a small survival kit, hanging from your suit to which it's connected by a cord. It contains everything necessary for survival in various situations, including a torch and a combat knife.",
+  before
+  [;
+    Open:
+      "You can't reach the kit to open it.";
+    Take:
+      "You can't reach it, as it hangs well below you.";
+  ],
+  add_to_scope
+  [;
+    if (cord has scenery)
+      PlaceInScope(cord);
+  ],
+has container openable scenery;
+
+!----------------------------------------
+! Cord
+!----------------------------------------
+Object cord "cord" !item08
+with
+  name 'cord',
+  description "The cord connects the survival kit to your suit.",
+  before
+  [;
+    Cut:
+      "You could cut it ", (string)CANT_REACH;
+    Pull, Take:
+      "The cord is tied very low on your suit, and it's difficult to reach. You may try to untie it, though.";
+    Untie:
+      move cord to limbo;
+      move survival_kit to limbo;
+      "You untie the cord and it falls down, together with the survival kit, disappearing into the mist.";
+  ],
+has scenery;
+
+!========================================
+! Room 3: Roots of Tree
+!========================================
+Object room03 "Roots of Tree"
+with
+  description "The long roots of the tree you were hanging from stretch around its enormous trunk, disappearing into the ground and the mist that covers it. Thick branches prevent you from seeing the sky. The mist thins towards the east.",
+  e_to room05,
+  u_to "You can't climb the tree, as the branches are well above you.",
+  before
+  [;
+    Climb:
+      print_ret (string)BRANCHES_ABOVE;
+  ],
+has light;
+
+!----------------------------------------
+! Roots of tree
+!----------------------------------------
+Object "roots of tree" room03
+with
+  name 'long' 'roots' 'tree' 'trunk',
+  description "It's indeed a big tree, judging by its roots, trunk, and branches.",
+has scenery;
+
+!----------------------------------------
+! Branches of tall tree
+!----------------------------------------
+Object "branches of tall tree" room03
+with
+  name 'sturdy' 'branches',
+  description
+  [;
+    print "The branches are so thick that they prevent you from seeing what's above you. ";
+    if (parachute hasnt moved)
+      "The parachute canopy, for example, is not visible from this position.";
+    "";
+  ],
+has scenery;
+
+!========================================
+! Room 4: Rocky Ground North
+!========================================
+Object room04 "Rocky Ground"
+with
+  description "Scattered on the rocky ground, you can see thousands of metal fragments and you realise that this is all that remains of your spaceship. The ground shows deep furrows, as if someone or something had been digging among the fragments. Once you're done here, you can go back south from where you came.",
+  s_to room05,
+  before
+  [;
+    Smell:
+      "The acrid smell of the explosion and flames fills the air.";
+  ],
+has light;
+
+!----------------------------------------
+! Rocky ground (floating object)
+!----------------------------------------
+Object "rocky ground" 
+with
+  name 'rocky' 'ground',
+  description "It's a barren rocky area, with nothing significant to highlight.",
+  found_in room04 room05,
+has scenery;
+
+!----------------------------------------
+! Deep furrows
+!----------------------------------------
+Object "deep furrows" room04
+with
+  name 'deep' 'furrows',
+  description "You wonder what might have dug those furrows.",
+has scenery pluralname;
+
+!----------------------------------------
+! Metal Fragments
+!----------------------------------------
+Object fragments "fragments" room04
+with
+  article "a lot of",
+  name 'metal' 'fragments',
+  description
+  [;
+	  print "Thousands of metal fragments are scattered around. ";
+		if (self hasnt general)
+		  "You doubt you can find anything useful, yet it might be worth searching through them.";
+		else
+		  "You've already searched through the fragments, so it's not worth searching them again.";
+	],
+  before
+	[;
+	  Search:
+			print "You search through the fragments";
+			if (self hasnt general)
+			{
+		    give self general;
+        move cylinder to room04;
+        " and find a metal cylinder.";
+			}
+			", but don't find anything else of interest.";
+  ],
+has scenery pluralname;
+
+!----------------------------------------
+! Metal cylinder
+!----------------------------------------
+Object cylinder "metal cylinder" !item01
+with
+  name 'metal' 'cylinder' 'tube',
+  description
+  [;
+    print "It's the only thing that survived the disaster, and it's just a metal cylinder open on one side, so you could use it as a container. You wonder if it can come in handy. ";
+    <<Search self>>;
+  ],
+  before
+  [;
+    Receive:
+      if ((noun ~= sulphur) && (noun ~= mineral) && (noun ~= charcoal) && (noun ~= saltpetre))
+        "You can't put that in the cylinder.";
+    Shoot:
+      if (self in player)
+        "Maybe you should drop it before shooting at it.";
+      if (pistol notin player)
+        "It's hard to shoot without a weapon.";
+      if (location ~= room11)
+        "There's no point in shooting at it here.";
+      if (((mineral notin cylinder) && (saltpetre notin cylinder)) || (sulphur notin cylinder) || (charcoal notin cylinder))
+        "Not all the required components are present.";
+      if (self notin crack)
+        "If you shoot it now the blast won't be strong enough to pierce through the rock. Maybe put it inside the crack.";
+      if (second == nothing && pistol in player)
+      {
+        print "(with the pistol)^";
+        second = pistol;
+      }
+      move self to limbo;
+      room11.e_to = room12;
+      "You shoot at the cylinder, which explodes like a bomb, piercing a big hole into the rock face. You can now proceed east.";
+    Close:
+      "You can't close it.";
+    Open:
+      "It's already open.";
+  ],
+has container open;
+
+!========================================
+! Room 5: Rocky Ground South
+!========================================
+Object room05 "Rocky Ground"
+with
+  description "The rocky ground extends in every direction around you, but there's nothing significant about this barren ground. The ground slopes up towards the east. From here you can also proceed north, south or west.",
+  n_to room04,
+  s_to
+  [;
+    if (trisaurus hasnt general)
+    {
+      trisaurus.time_left = 0;
+      StartDaemon(trisaurus);
+    }
+    return room06;
+  ],
+  e_to room15,
+  u_to room15,
+  w_to room03,
+has light;
+
+!----------------------------------------
+! Flint
+!----------------------------------------
+Object flint "flint" room05 !item06
+with
+  name 'flint',
+  description "It's a piece of hard sedimentary rock that fractures to produce sharp edges.",
+  before
+  [;
+    Attack:
+      if (second == nothing)
+        "Ouch!";
+      if (knife in nothing)
+      {
+        if (flint in player)
+          move knife to player;
+        else
+          move knife to location;
+        move flint to limbo;
+        "Using the rock, you hit the flint a few times, flaking it until it becomes a makeshift knife.";
+      }
+      "There's no need to hit the rock with that.";
+  ],
+has;
+
+!----------------------------------------
+! Rock
+!----------------------------------------
+Object rock "rock" room05 !item06
+with
+  name 'big' 'rock',
+  description "It's a big rock.",
+  before
+  [;
+    Attack:
+      if (second == nothing)
+        "Ouch!";
+      if (knife in nothing)
+      {
+        if (flint in player)
+          move knife to player;
+        else
+          move knife to location;
+        move flint to limbo;
+        "Using the rock, you hit the flint a few times, flaking it until it becomes a makeshift knife.";
+      }
+      "There's no need to hit the rock with that.";
+  ],
+has; !static;
+
+!----------------------------------------
+! Makeshift Knife
+!----------------------------------------
+Object knife "makeshift knife"
+with
+  name 'makeshift' 'knife' 'flint',
+  description "It's a makeshift knife that you crafted by yourself out of a piece of flint.",
+has;
+
+!========================================
+! Room 6: Marshy Area
+!========================================
+Object room06 "Marshy Area"
+with
+  description "You're entering a marshy area. The ground is covered with pools of dark liquid and the visibility is very limited due to a fog that becomes thicker and thicker wherever you turn. The fog thins out towards the north, while it gets denser towards the east.",
+  n_to
+  [;
+    if (trisaurus hasnt general)
+      StopDaemon(trisaurus);
+    return room05;
+  ],
+  e_to room07,
+  before
+  [;
+    Go:
+      if (selected_direction == n_to && player in trisaurus)
+        "You can't take the trisaurus that way.";
+      if (selected_direction == e_to && player notin trisaurus)
+        print_ret (string)NEED_TO_MOUNT_TRISAURUS;
+  ],
+has passable light;
+
+!----------------------------------------
+! Marshy area
+!----------------------------------------
+Object "marshy area" room06
+with
+  name 'marshy' 'area' 'pools' 'of' 'dark' 'liquid',
+  description "You wonder if the liquid is crude oil.",
+has scenery;
+
+!----------------------------------------
+! Thick Fog (floating object)
+!----------------------------------------
+Object "fog"
+with
+  name 'thick' 'fog',
+  description
+  [;
+    "The fog becomes thicker and thicker wherever you turn. ";
+  ],
+  before
+  [;
+    Smell:
+      "You try to smell the fog, but your sense of smell detects nothing unusual.";
+    Take, Touch: 
+      "You can't touch or take the fog.";
+  ],
+  found_in room06 room07 room08,
+has scenery;
+
+!----------------------------------------
+! Huge trisaurus
+!----------------------------------------
+Object trisaurus "huge trisaurus" room06 !item07
+with
+  name 'huge' 'trisaurus',
+  description
+  [;
+    print"It's a weird animal, similar to a dinosaur. ";
+    if (self hasnt general)
+      "It must be very hungry, as it keeps feeding on what it finds around.";
+    "Now that you befriended it, you can mount it to traverse the marsh.";
+  ],
+  life
+  [;
+    Give:
+      if (noun == fruits)
+      {
+        
+        StopDaemon(self);
+        give self general;
+        move fruits to limbo;
+        "The beast seems to appreciate the offer. In a few seconds, it devours the fruits and becomes friendly, trying to rub against you. Now that you've befriended it, you can mount it to traverse the marsh.";
+      }
+      else
+        "The trisaurus doesn't seem interested.";
+  ],
+  react_before
+  [;
+    if (player notin self)
+      rfalse;
+    if (noun == nothing)
+      rfalse;
+    if (action == ##Examine or ##Go)
+      rfalse;
+    Take:
+      if (noun has static or scenery)
+        rfalse;
+    Insert, PutOn:
+      if (CommonAncestor(parent(player), second) ~= self)
+        "You can't reach ", (the)second, " while you're on the trisaurus.";
+  ],
+  before
+  [ destination;
+    Enter:
+      if (self hasnt general)
+        "You can't mount the trisaurus if you don't befriend it first.";
+    Go:
+      destination = location.(direction_properties_array->selected_direction_index);
+      if (destination ofclass Object)
+      {
+        if (destination hasnt passable)
+        {
+          print "You can't take the trisaurus that way.^";
+          return 2;
+        }
+      }
+      return 1;
+  ],
+  after
+  [;
+    Enter:
+      "You get on the trisaurus.";
+    Exit, GetOff:
+      "You get off the trisaurus.";
+  ],
+  daemon
+  [;
+    if (self hasnt general)
+    {
+      self.time_left++;
+      switch (self.time_left)
+      {
+        1: "^The trisaurus looks at you puzzled. It has probably never seen a creature like you.";
+        3: "^The trisaurus comes closer. It sniffs you, as if to understand whether you are edible, then decides it doesn't like meat.";
+        5: "^The trisaurus gets even closer and pushes you aside. You were probably stepping on its lunch.";
+        7: StopDaemon(self);
+         print "^The trisaurus is annoyed by your presence, and gently but firmly pushes you back from where you came.^^";
+         self.time_left = 0;
+         PlayerTo(room05);
+         rtrue;
+      }
+    }
+  ],
+  time_left 0,
+has animate neuter enterable supporter;
+
+!========================================
+! Room 7: Dangerous Marsh
+!========================================
+Object room07 "Dangerous Marsh"
+with
+  description "You've arrived in the middle of dangerous marshes and the thick fog that surrounds you makes it impossible to orient yourself. Sinister sounds reveal the presence of mysterious and threatening creatures and you try, with difficulty, to penetrate the fog with your gaze, while the ground continually changes, revealing sudden holes and areas of mud.",
+  n_to room07,
+  s_to room08,
+  e_to room07,
+  w_to room06,
+  before
+  [;
+    Go:
+      if ((selected_direction == n_to || selected_direction == e_to || selected_direction == s_to || selected_direction == w_to) && player notin trisaurus)
+        print_ret (string)NEED_TO_MOUNT_TRISAURUS;
+    Listen:
+      "It seems to be quieter (and safer) towards the west and towards the south.";
+  ],
+has passable light;
+
+!----------------------------------------
+! Dangerous marsh (floating object)
+!----------------------------------------
+Object "marsh"
+with
+  name 'middle' 'of' 'dangerous' 'marsh' 'marshes',
+  description "It's a dangerous place, and you can't see where you're going. Maybe stay away from the sinister sounds.",
+  found_in room07 room08,
+has scenery;
+
+!----------------------------------------
+! Holes (floating object)
+!----------------------------------------
+Object "holes"
+with
+  name 'holes',
+  description "The holes don't seem to be very deep, but you don't want to push your luck testing them.",
+  before
+  [;
+    Enter:
+      "You'd better not.";
+  ],
+  found_in room07 room08,
+has scenery pluralname;
+
+!----------------------------------------
+! Mud (floating object)
+!----------------------------------------
+Object "mud"
+with
+  name 'mud',
+  description "It's rather slippery. Take care.",
+  before
+  [;
+    Take:
+      "What for?";
+  ],
+  found_in room07 room08,
+has scenery;
+
+!========================================
+! Room 8: Dangerous Marsh
+!========================================
+Object room08 "Dangerous Marsh"
+with
+  description "You've arrived in the middle of dangerous marshes and the thick fog that surrounds you makes it impossible to orient yourself. Sinister sounds reveal the presence of mysterious and threatening creatures and you try, with difficulty, to penetrate the fog with your gaze, while the ground continually changes, revealing sudden holes and areas of mud.",
+  n_to room07,
+  s_to room08,
+  w_to room08,
+  e_to
+  [;
+    if ((snakes hasnt general) && (egg notin player))
+      "The way ahead might be dangerous; make sure you have what you need before proceeding."; !turn this into costant (also room12)
+    if (snakes hasnt general)
+    {
+      print "All of a sudden the fog clears, too late for you to see you were stepping on friable ground. You lose your balance and end up in a hole full of snakes.^^";
+      StartDaemon(snakes);
+      PlayerTo(room09);
+    }
+    else
+      PlayerTo(room10);
+    rtrue;
+  ],
+  before
+  [;
+    Go:
+      if (selected_direction == e_to && player in trisaurus)
+        "You can't take the trisaurus that way.";
+      if ((selected_direction == n_to || selected_direction == w_to || selected_direction == s_to) && player notin trisaurus)
+        print_ret (string)NEED_TO_MOUNT_TRISAURUS;
+    Listen:
+      "It seems to be quieter (and safer) towards the east and towards the north.";
+  ],
+has passable light;
+
+!========================================
+! Room 9: Deep Depression
+!========================================
+Object room09 "Deep Depression"
+with
+  description
+  [;
+    print "You fell into a deep depression where you discover, with horror, the presence of a horrible tangle of snakes. ";
+    if (snakes hasnt general)
+      "The walls of dirt are too high and prone to crumbling to allow you a quick and safe escape, and you begin to fear that this hole will soon become your tomb.";
+    "Yet, they are now busy feeding on the egg, so you can go up to a safer ground.";
+  ],
+  u_to
+  [;
+    if (snakes hasnt general)
+      "If you turn your back to the snakes while trying to go up, they will attack you and bite you to death.";
+    return room10;
+  ],
+  before
+  [;
+    Hint:
+      if (snakes hasnt general)
+        "Do you have anything with you that the snakes could eat?";
+      "You don't need any more hints for this location.";
+  ],
+has light;
+
+!----------------------------------------
+! Deep depression
+!----------------------------------------
+Object "depression" room09
+with
+  name 'deep' 'depression' 'hole',
+  description
+  [;
+    print "It's full of snakes that are ";
+    if (snakes has general)
+      "too busy feeding from the giant egg to mind you.";
+    "about to attack you.";
+  ],
+has scenery;
+
+!----------------------------------------
+! Walls
+!----------------------------------------
+Object "walls" room09
+with
+  name 'walls',
+  description "They easily crumble if you try to get out of here in haste.",
+has scenery pluralname;
+
+!----------------------------------------
+! Dirt
+!----------------------------------------
+Object "dirt" room09
+with
+  name 'dirt',
+  description "There's nothing special about it.",
+has scenery;
+
+!----------------------------------------
+! Snakes
+!----------------------------------------
+Object snakes "snakes" room09 !item07
+with
+  name 'snakes',
+  description
+  [;
+    print"Falling into a pit full of snakes is something you've only seen in movies. ";
+    if (self hasnt general)
+      "But as in those movies, the snakes are attracted by your presence and move towards you.";
+    "Now that they're feeding on the egg, they pay no attention to you.";
+  ],
+  life
+  [;
+    Give:
+      if (noun == egg)
+      {
+        StopDaemon(self);
+        give self general;
+        give egg general;
+        move egg to location;
+        "You throw the egg towards the snakes. It breaks exposing its content, and the snakes start feeding on it, paying no attention to you any more. ";
+      }
+      else
+        "The snakes are not interested in that, and keep hissing towards you.";  
+  ],
+  before
+  [;
+    Attack, Shoot:
+      "You could never manage to kill them all.";
+  ],
+  daemon
+  [;
+    if (self hasnt general)
+    {
+      self.time_left++;
+      switch (self.time_left)
+      {
+        2: "^The snakes hiss....";
+        3: "^The snakes come closer....";
+        4: "^The snakes have almost reached you...";
+        5: StopDaemon(self);
+          deadflag = 1;
+          "^The snakes pounce on you, emitting horrible hisses. You're finished.";
+      }
+    }
+  ],
+  time_left 0,
+has animate pluralname;
+
+!========================================
+! Room 10: Arid Expanse of Land
+!========================================
+Object room10 "Arid Expanse of Land"
+with
+  description "You're now on an arid expanse of land that extends from east to west. The only noticeable feature is the hole full of snakes that was about to become your grave.",
+  e_to room11,
+  w_to room08,
+  d_to "There's no way you're going down in that hole full of snakes.",
+has light;
+
+!----------------------------------------
+! Arid expanse of land
+!----------------------------------------
+Object "arid land"
+with
+  name 'arid' 'expanse' 'of' 'land',
+  description "There's not much to see, beside the hole full of snakes.",
+  found_in room10 room11,
+has scenery;
+
+!----------------------------------------
+! Hole full of snakes
+!----------------------------------------
+Object "hole" room10
+with
+  name 'hole',
+  description "Don'bother with it any longer.",
+has scenery;
+
+!----------------------------------------
+! Snakes
+!----------------------------------------
+Object "snakes" room10
+with
+  name 'snakes',
+  description "They are busy feeding on the egg.",
+  before
+  [;
+    Take:
+      "Nope! Have you gone insane?";
+  ],
+has scenery pluralname;
+
+!========================================
+! Room 11: Foot of Massive Rock Face
+!========================================
+Object room11 "Foot of Massive Rock Face"
+with
+  description
+  [;
+    print "A massive rock face rises up before you, casting a menacing shadow for many metres. The natural barrier extends for kilometres, creating a sort of boundary, and it's so smooth that no climbing is possible. To the west, you can see a vast expanse of land. ";
+    if (cylinder notin limbo)
+      print_ret (string)CRACK_IN_ROCK;
+    "After the explosion, you can now proceed east.";
+  ],
+  e_to "You can't proceed eastbound, as the crack is too small for you to enter.",
+  w_to room10,
+  before
+  [;
+    Hint:
+      if (cylinder notin limbo)
+        "You could make a makeshift bomb putting the necessary elements inside a container. Then, you only need to ignite it. Shooting it, perhaps?";
+  ],
+has light;
+
+!----------------------------------------
+! Rock face
+!----------------------------------------
+Object "rock face" room11
+with
+  name 'foot' 'of' 'massive' 'rock' 'face',
+  description "It looks like an impassable wall.",
+has scenery;
+
+!----------------------------------------
+! Large crack in the rock
+!----------------------------------------
+Object crack "crack" room11
+with
+  invent
+  [;
+    if (inventory_stage == 2 && child(self) == 0)
+      rtrue;
+  ],
+  name 'crack',
+  description
+  [;
+    if (cylinder notin limbo)
+      print_ret (string)CRACK_IN_ROCK;
+    "It's the way you opened after the explosion.";
+  ],
+  before
+  [;
+    Enter:
+      if (cylinder notin limbo)
+        print_ret (string)CRACK_IN_ROCK;
+      PlayerTo(room12);
+      rtrue;
+  ],
+has static container open;
+
+!========================================
+! Room 12: Edge of Massive Chasm
+!========================================
+Object room12 "Edge of Massive Chasm"
+with
+  description
+  [;
+    if (self hasnt visited)
+    {
+      give rope_tied_to_tree absent;
+      MoveFloatingObjects();
+    }
+    "A massive chasm opens up in front of you, seemingly splitting the region you're crossing in two. The inside walls of the chasm are sheer, with no visible protrusions or cavities, and the bottom is so far away that it can only be located with a real effort to see. Exits lead west and down.";
+  ],
+  w_to room11,
+  d_to
+  [;
+    if (rope_tied_to_tree has absent)
+      "You can't descend into the chasm without some sort of help.";
+    return room13;
+  ],
+has light;
+
+!----------------------------------------
+! Massive chasm
+!----------------------------------------
+Object "massive chasm" room12
+with
+  name 'edge' 'of' 'massive' 'chasm',
+  description "It's a massive and deep chasm.",
+has scenery;
+
+!----------------------------------------
+! Tree
+!----------------------------------------
+Object tree "large tree" room12
+with
+  name 'tree' 'large' 'mature-looking' 'mature' 'looking' 'branches',
+  description
+  [;
+    print "It's a mature-looking tree that should be strong and sturdy, yet the branches hanging over the chasm seem to be dying.";
+    if (rope_tied_to_tree in location)
+      print " There's a rope tied around the base of the tree and lowered into the chasm.";
+    "";
+  ],
+  before
+  [;
+    Climb:
+      "You can see from the ground that it's not worth climbing.";
+  ],
+has static;
+
+!----------------------------------------
+! Rope tied to tree (floating object)
+!----------------------------------------
+Object rope_tied_to_tree "rope tied to the tree"
+with
+  name 'rope',
+  description "One end of the rope is tied to the tree and the other end is lowered down into the chasm.",
+  before
+  [;
+    Climb:
+      if (self in room12)
+        <<Go FAKE_D_OBJ>>;
+      <<Go FAKE_U_OBJ>>;
+    Pull, Take:
+      print_ret (string)YOULL_HAVE_TO_UNTIE_IT_FIRST;
+    Tie:
+      "It's already tied.";
+    Untie:
+      if (location == room13)
+        "You can't untie the rope from down here.";
+      give self absent;
+      MoveFloatingObjects();
+      move rope to location;
+      PronounNotice(rope);
+      "You pull the rope out of the chasm, untie it from the tree and lay it on the ground.";
+  ],
+  found_in room12 room13,
+has;
+
+!----------------------------------------
+! Long rope
+!----------------------------------------
+Object rope "long rope"
+with
+  name 'long' 'rope',
+  description "This long rope was one of the static lines of your parachute. It's very robust.",
+  before
+  [;
+    Climb:
+      "The rope would need to be tied to something before you can climb it.";
+    Tie:
+      if (second == nothing && location == room12)
+      {
+        print "(to the tree)^";
+        second = tree;
+      }
+      if (second == nothing)
+        "You'll have to tell me what to tie it to.";
+      if (second ~= tree)
+        "You can't tie the rope to ", (ThatOrThose)second, ".";
+      remove self;
+      move rope_tied_to_tree to location;
+      give rope_tied_to_tree ~absent;
+      PronounNotice(rope_tied_to_tree);
+      "You tie the rope to the tree and throw the other end into the chasm.";
+    Untie:
+      "It's not tied to anything.";
+  ],
+has;
+
+!========================================
+! Room 13: Bottom of Chasm
+!========================================
+Object room13 "Bottom of Chasm"
+with
+  description "You're at the bottom of a deep and vast chasm. Immense rock walls rise on all sides, and the complete lack of handholds leaves no hope of climbing up. You would be stuck here, if it weren't for your rope. On one side of the chasm, hidden by the shadow of the gigantic rock walls, you can see a half-buried spaceship. The hatch is open, so you can enter it.",
+  u_to room12,
+  in_to room14,
+has light;
+
+!----------------------------------------
+! Chasm
+!----------------------------------------
+Object "chasm" room13
+with
+  name 'bottom' 'of' 'deep' 'vast' 'chasm',
+  description "There's not much to see here, except for the half-buried space ship.",
+has scenery;
+
+!========================================
+! Room 14: Inside of Spaceship
+!========================================
+Object room14 "Inside of Spaceship"
+with
+  description "The inside of the spaceship, having been exposed to the elements due to the open hatch, is ruined and unusable. Still, there must be some power left, as one control panel is lit. The only exit is out.",
+  out_to room13,
+has light;
+
+!----------------------------------------
+! Entrance hatch
+!----------------------------------------
+Object "hatch"
+with
+  name 'hatch',
+  description
+  [;
+    print "The open hatch allows you to ";
+    if (location == room13)
+      print "enter ";
+    else
+      print "exit ";
+    "the ship.";
+  ],
+  before
+  [;
+    Close:
+      "The hatch is jammed and can't be closed any more.";
+    Open:
+      "It's already open.";
+    Enter:
+      if (self in room13)
+        <<Go FAKE_IN_OBJ>>;
+    Exit:
+      if (self in room14)
+        <<Go FAKE_OUT_OBJ>>;
+  ],
+  found_in room13 room14,
+has scenery;
+
+!----------------------------------------
+! Spaceship
+!----------------------------------------
+Object "spaceship" 
+with
+  name 'spaceship' 'space' 'ship' 'shuttle',
+  description
+  [;
+    print "The shuttle is half buried by the landslide and can't fly any more. However, the hatch is open, so you can ";
+    if (location == room13)
+      print "enter ";
+    else
+      print "exit ";
+    "the ship.";
+  ],
+  before
+  [;
+    Enter:
+      if (self in room13)
+        <<Go FAKE_IN_OBJ>>;
+    Exit:
+      if (self in room14)
+        <<Go FAKE_OUT_OBJ>>;
+  ],
+  found_in room13 room14,
+has scenery;
+
+!----------------------------------------
+! Landslide
+!----------------------------------------
+Object "landslide"
+with
+  name 'landslide',
+  description "It's one of the many landslides that have occurred on this planet, still in geological evolution. Unfortunately, this one has half-buried the shuttle.",
+  found_in room13 room14,
+has scenery;
+
+!----------------------------------------
+! Control panel
+!----------------------------------------
+Object "control panel" room14
+with
+  name 'control' 'panel',
+  description "It looks like the panel that activates the emergency beacon, but it needs some sort of activation key. A small slot next to the panel attracts your attention.",
+has scenery;
+
+!----------------------------------------
+! Slot
+!----------------------------------------
+Object slot "slot" room14
+with
+  name 'small' 'slot',
+  description
+  [;
+    print "It's a small slot, probably used to hold the activation key for the emergency beacon. ";
+    <<Search self>>;
+  ],
+  before
+  [;
+    Receive:
+      if (shockproof_container notin player)
+        "It looks like you're missing an important item. Remember what you came here for before activating the beacon.";
+      if (noun ~= plate)
+        print_ret (The)noun, " won't fit in the slot.";
+      deadflag = 2;
+      "As soon as you insert the metal plate into the slot, several indicator lights flicker on, signaling that the emergency beacon has been activated. For a few agonizing minutes, nothing else seems to happen, but then a voice emerges clearly from a hidden speaker.^^~Morgan! Morgan, is that you? We're coming to get you!~^^A few hours later, a shuttle from the mothership, which had remained in orbit around Guyoth IV, reaches you and brings you back on board. With the new samples you've recovered, it will be possible to complete the synthesis of a vaccine. Earth should finally be safe from any potential star plague.";
+  ],
+has container open static;
+
+!========================================
+! Room 15: Top of Rocky Slope
+!========================================
+Object room15 "Top of Rocky Slope"
+with
+  description "You've walked along a steep rocky slope that ends in a field of rocks. The ground slopes down towards the west. From here, you can also proceed north.",
+  n_to room16,
+  w_to room05,
+  d_to room05,
+has light;
+
+!----------------------------------------
+! Rocky slope
+!----------------------------------------
+Object "rocky slope" room15
+with
+  name 'top' 'of' 'steep' 'rocky' 'expanse' 'slope' 'rocks',
+  description "There's nothing else but rocks on this expanse.",
+has scenery;
+
+!========================================
+! Room 16: Sulphurous Area
+!========================================
+Object room16 "Sulphurous Area"
+with
+  description "You've now reached a sulphurous area that reveals the volcanic nature of the place. The ground rises towards the north. From here, you can also go east or south.",
+  n_to room17,
+  u_to room17,
+  s_to room15,
+  e_to room20,
+  before
+  [;
+    Smell:
+      "It sure smells funny, here! Like rotten eggs.";
+  ],
+has light;
+
+!----------------------------------------
+! Sulphurous area
+!----------------------------------------
+Object "sulphurous area" room16
+with
+  name 'sulphurous' 'sulfurous' 'area',
+  description
+  [;
+    print "As it's not pleasant to stay here, ";
+    if (helmet has worn)
+      print "(you're thankfully wearing your helmet) ";
+    "you'd better leave as soon as you're done.";
+  ],
+has scenery;
+
+!----------------------------------------
+! Sulphur
+!----------------------------------------
+Object sulphur "sulphur" room16
+with
+  article "some",
+  name 'sulphur' 'sulfur',
+  description "It's a mineral that has many uses, including making explosives.",
+  before
+  [;
+    Smell:
+      "It smells like rotten eggs.";
+  ],
+has;
+
+!========================================
+! Room 17: Rocky Ridge
+!========================================
+Object room17 "Rocky Ridge"
+with
+  description "You've reached a rocky ridge, above which there's an enormous tangle of branches and grass that forms a sort of large vegetal ring. The only available directions are up and down.",
+  u_to room18,
+  in_to room18,
+  d_to room16,
+  s_to room16,
+has light;
+
+!----------------------------------------
+! Rocky ridge
+!----------------------------------------
+Object "rocky ridge" room17
+with
+  name 'large' 'rocky' 'ridge',
+  description "Above the ridge sits a sort of large vegetal ring.",
+has scenery;
+
+!----------------------------------------
+! Vegetal Ring
+!----------------------------------------
+Object "vegetal ring" room17
+with
+  name 'large' 'enormous' 'huge' 'nest' 'vegetal' 'ring',
+  description "At a closer look, the ring appears to be a huge nest.",
+has scenery;
+
+!----------------------------------------
+! Branches
+!----------------------------------------
+Object "branches" room17
+with
+  name 'branches' 'grass' 'tangle',
+  description "The tangle of grass and branches form a huge nest.",
+has scenery pluralname;
+
+!========================================
+! Room 18: Enormous Nest
+!========================================
+Object room18 "Enormous Nest"
+with
+  description "The bottom of the enormous nest is mostly covered with feathers and scattered with the remains of numerous animals. The only way out is down.",
+  d_to
+  [;
+    if ((pterodactyl has general) || ((pterodactyl hasnt general) && (pistol notin player))) 
+      return room17;
+    StartDaemon(pterodactyl);
+    print "As you try to leave the nest the sky darkens. You hear a shriek cry, then something very big grabs you and pulls you upward so violently that everything but the pistol you're holding falls into the nest. To your horror, you're now in the claws of a huge pterodactyl. "; 
+    DropAll();
+    print "^^";
+    PlayerTo(room19);
+    rtrue;
+  ],
+has light;
+
+!----------------------------------------
+! Nest
+!----------------------------------------
+Object nest "nest" room18
+with
+  name 'enormous' 'huge' 'nest',
+  description "Such a huge nest must be the home of something just as big.",
+  before
+  [;
+    Search:
+      <<Search feathers>>;
+  ],
+has scenery;
+
+!----------------------------------------
+! Bottom of nest
+!----------------------------------------
+Object "bottom" room18
+with
+  name 'bottom',
+  description "It's littered with feathers and the scattered remains of numerous animals.",
+  before
+  [;
+    Search:
+      <<Search feathers>>;
+  ],
+has scenery;
+
+!----------------------------------------
+! Feathers
+!----------------------------------------
+Object feathers "feathers and remains" room18
+with
+  article "some",
+  name 'feathers' 'remains',
+  description "Feathers and remains litter the nest.",
+  before
+	[;
+	  Search:
+			print "You search through the feathers";
+			if (self hasnt general)
+			{
+		    give self general;
+        move egg to room18;
+        move pistol to room18;
+        " and find a large egg and a pistol. The pistol is indeed a weird finding, and even more so when you recognise it as yours. Maybe the animal that lives here saw it glinting somewhere and brought it to its nest.";
+			}
+			", but don't find anything else of interest.";
+    Take:
+      "You have no use for the feathers and the remains.";
+  ],
+has scenery pluralname;
+
+!----------------------------------------
+! Large egg
+!----------------------------------------
+Object egg "egg" 
+with
+  article "a large",
+  short_name
+  [;
+    if (self has general)
+      print "broken ";
+    rfalse;
+  ],
+  name 'large' 'egg',
+  description
+  [;
+    if (location == room18)
+      "Judging from the size of this egg, the creature living here must be huge.";
+    print "It's an egg you found in the nest on top of the rocky ridge. ";
+    if (self has general)
+      "It's now broken and snakes are feeding on it.";
+    "";
+  ],
+  before
+  [;
+    Drop, ThrowAt:
+      if (location == room09)
+        <<Give self snakes>>;
+    Take:
+      if (self has general)
+        "You have no use for the egg any more.";
+  ],
+has;
+
+!----------------------------------------
+! Laser pistol
+!----------------------------------------
+Object pistol "laser pistol" 
+with
+  article "your",
+  name 'laser' 'pistol',
+  description
+  [;
+    "It was hidden under the feathers inside the nest. Maybe the bird who made the nest was attracted by a glint. The pistol is still working, despite the crash.";
+  ],
+  before
+  [;
+    Drop, Insert:
+      "You'd better not. This planet looks like a deadly place, and it's better to be equipped.";
+    Load:
+      "It's already loaded and fully charged.";
+  ],
+has;
+
+!========================================
+! Room 19: In Claws of Pterodactyl
+!========================================
+Object room19 "In Claws of Pterodactyl"
+with
+  name 'enormous' 'claws' 'of' 'horrible' 'pterodactyl',
+  description "The enormous claws of the horrible pterodactyl tightly grip your suit by the shoulders, as it flies over the territory, looking for a rocky area where to let you fall and make your body more suitable as a meal for its young that are about to be born.",
+  before
+  [;
+    Hint:
+      "Shooting the beast won't kill him, but maybe it'll give you a chance to escape.";
+  ],
+has light;
+
+!----------------------------------------
+! Claws
+!----------------------------------------
+Object "claws" room19
+with
+  name 'enormous' 'claws',
+  description "The claws of the pterodactyl hold you firmly by your shoulders, but they might open anytime to let you fall down.",
+  before
+  [;
+    Attack, Shoot:
+      "The claws are too close to your head, and you might risk to shoot yourself instead.";
+  ],
+has scenery;
+
+!----------------------------------------
+! Feathers
+!----------------------------------------
+Object "feathers and remains" room19
+with
+  name 'feathers',
+  description "They are exaclty like the one you found in the nest.",
+has scenery pluralname;
+
+!----------------------------------------
+! Pterodactyl
+!----------------------------------------
+Object pterodactyl "pterodactyl" room19
+with
+  name 'huge' 'giant' 'pterodactyl',
+  description "It's a giant bird-like flying dinosaur, very similar to the artist's impression of a pterodactyl you have seen in the books. It's developing feathers, so the theories of evolutions you've always studied proved correct.",
+  before
+  [;
+    Attack, Shoot:
+      give self general;
+      StopDaemon(self);
+      if (second == nothing && pistol in player)
+      {
+        print "(with the pistol)^";
+        second = pistol;
+      }
+      print "You shoot at the giant beast without hitting any vital point. Yet, surprised by the blast, the pterodactyl loses altitude. As you approach the top of the trees, you fire again, this time hitting the beast. Its claws open right when you are above the trees and you fall down stopping right next to your parachute canopy. The pterodactyl disappears below the horizon. That was close!^^";
+      PlayerTo(room01);
+      rtrue;
+    Take:
+      "You are the one being taken. Think about something else.";
+  ],
+  daemon
+  [;
+    switch (self.time_left++)
+    {
+      1: "^The pterodactyl shrieks, as if to send out a war cry.";
+      2: "^The pterodactyl is now flying above some trees. You look down and you see the canopy of your parachute.";
+      3: "^The pterodactyl is about to open its claws to let you fall.";
+      4: "^It's now or never. Do something!";
+      5: deadflag = 1;
+        "The huge claws open up, and for a brief moment you feel relieved. You start falling towards the ground at increasing speed. Then, you hit the rocks and die instantly.";
+    }
+  ],
+  time_left 0,
+has animate neuter;
+
+!----------------------------------------
+! Dummy Parachute
+!----------------------------------------
+Object "parachute" room19
+with
+  article "your",
+  name 'parachute' 'chute' 'canopy',
+  description
+  [;
+    "From this position you can only see part of it.";
+  ],
+  before
+  [;
+    Take:
+      "You can't take the parachute while you are in the claws of the pterodactyl.";
+  ],
+has scenery;
+
+!========================================
+! Room 20: Slope of Landslide
+!========================================
+Object room20 "Slope of Landslide"
+with
+  description "You're walking along a long landslide slope, possibly the result of the planet's seismic activity. From here you can go down towards the south, or proceed either east or west.",
+  s_to room21,
+  e_to room24,
+  w_to room16,
+  d_to room21,
+has light;
+
+!----------------------------------------
+! Landslide
+!----------------------------------------
+Object "landslide" room20
+with
+  name 'long' 'landslide' 'slope',
+  description "There's nothing significant to report about the landslide.",
+has scenery;
+
+!========================================
+! Room 21: Outside Entrance to Cave
+!========================================
+Object room21 "Outside Entrance to Cave"
+with
+  description "You are in front of the entrance to a cave, whose opening is big enough to allow the light to illuminate the inside without the need for a torch. No sound can be heard from inside the cave to indicate the presence of any animal or other danger. You can either enter the cave by going east, go up north towards a higher ground or proceed towards the south.",
+  u_to room20,
+  n_to room20,
+  s_to room22,
+  !e_to room23,
+  e_to
+  [;
+    if ((pistol notin player) && (spider hasnt general))
+      "It might be dangerous to venture inside the cave without a proper weapon; make sure you have what you need before proceeding."; 
+    else
+      PlayerTo(room23);
+    rtrue;
+  ],
+  !in_to room23,
+  in_to
+  [;
+    if ((pistol notin player) && (spider hasnt general))
+      "It might be dangerous to venture inside the cave without a proper weapon; make sure you have what you need before proceeding."; 
+    else
+      PlayerTo(room23);
+    rtrue;
+  ],
+  before
+  [;
+    Listen:
+      "You don't hear anything suspicious.";
+  ],
+has light;
+
+!----------------------------------------
+! Entrance
+!----------------------------------------
+Object "entrance" room21
+with
+  name 'entrance' 'opening',
+  description "It's wide enough to allow the light in.",
+has scenery;
+
+!----------------------------------------
+! Cave (floating object)
+!----------------------------------------
+Object "cave" 
+with
+  name 'cave',
+  description "It's wide and humid, but you don't need a source of light inside it.",
+  before
+  [;
+    Enter:
+      if (self in room21)
+        <<Go FAKE_IN_OBJ>>;
+    Exit:
+      if (self in room23)
+        <<Go FAKE_OUT_OBJ>>;
+  ],
+  found_in room21 room23,
+has scenery;
+
+!========================================
+! Room 22: Forest of Shrubs
+!========================================
+Object room22 "Forest of Shrubs"
+with
+  description "You've reached a thick forest of shrubs that extends in various directions and covers everything. They're so thick that the only possible exit is towards the north via the landslide slope from which you came.",
+  n_to room21,
+has light;
+
+!----------------------------------------
+! Forest of shrubs
+!----------------------------------------
+Object "forest of shrubs" room22
+with
+  name 'thick' 'impassable' 'forest' 'of' 'shrubs',
+  description "They are thick and impassable.",
+has scenery;
+
+!----------------------------------------
+! Large yellow fruits
+!----------------------------------------
+Object fruits "large yellow fruits" room22
+with
+  name 'large' 'yellow' 'fruits' 'fruit',
+  description "They are big yellow fruits that you don't have the stomach to taste. But maybe beasts feed on them here.",
+  before
+  [;
+    Drop:
+      if (location == room06)
+        print "You drop the fruits close to the trisaurus. ";
+        <<Give self trisaurus>>;
+    Eat:
+      "You know better than to eat strange fruits on a strange plant.";
+  ],
+has edible pluralname;
+
+!========================================
+! Room 23: Large Cave
+!========================================
+Object room23 "Large Cave"
+with
+  description "The large cave hides the remains of some Earthlings, now covered by a veil of mist that makes them take on an unreal appearance. A bioluminescence on the walls is bright enough to let you see without a torch. From here, the only exit is towards the west.",
+  !w_to room21,
+  w_to
+  [;
+    if (spider in nothing) 
+    {
+      move spider to location;
+      PlaceInScope(Spider);
+      StartDaemon(spider);
+      print "As you try to exit the cave a giant spider comes in and blocks your way out.^^";
+      <<Look>>;
+    }
+    if (spider hasnt general)
+      "You can't exit the cave with the spider blocking the entrance.";
+    else
+      return room21;
+  ],
+  out_to
+  [;
+   if (spider in nothing) 
+    {
+      move spider to location;
+      PlaceInScope(Spider);
+      StartDaemon(spider);
+      print "As you try to exit the cave a giant spider comes in and blocks your way out.^^";
+      <<Look>>;
+    }
+    if (spider hasnt general)
+      "You can't exit the cave with the spider blocking the entrance.";
+    else
+      return room21;
+  ],
+  before
+  [;
+    Hint:
+      if (spider hasnt general)
+        "Killing the beast is the only way to exit the cave.";
+      "You don't need any more hints for this location.";
+  ],
+has light;
+
+!----------------------------------------
+! Strange very brittle mineral
+!----------------------------------------
+Object mineral "strange very brittle mineral" room23
+with
+  name 'strange' 'very' 'brittle' 'mineral' 'saltpetre',
+  description
+  [;
+    if (self in player)
+      move saltpetre to player;
+    if (self in cylinder)
+      move saltpetre to cylinder;
+    if (self in location)
+      move saltpetre to location;
+    PronounNotice(saltpetre);
+    move self to limbo;
+    "At a closer look, you recognise the mineral as saltpetre.";
+  ],
+has;
+
+!----------------------------------------
+! Saltpetre
+!----------------------------------------
+Object saltpetre "saltpetre"
+with
+  article "some",
+  name 'strange' 'very' 'brittle' 'mineral' 'saltpetre',
+  description
+  [;
+    "It's an organic material that can be combined to produce explosive materials.";
+  ],
+has;
+
+!----------------------------------------
+! Remains of some Earthlings
+!----------------------------------------
+Object remains "remains of some Earthlings" room23
+class Body
+with
+  article "the",
+  name 'men' 'men^s' 'bodies' 'corpses' 'scientists' 'remains' 'Earthlings',
+  description
+  [;
+    print "These must be some of the scientists who took part in the Discovery's expedition. They might have come back here searching for a solution after the plague broke out. ";
+    if (room13 hasnt visited)
+      "You wonder how they got here. There might be a space shuttle somewhere.";
+    "They came to this planet on a shuttle just to die inside this cave. How sad.";
+  ],
+has animate pluralname static;
+
+!----------------------------------------
+! Mist
+!----------------------------------------
+Object "mist" room23
+with
+  name 'mist' 'bioluminescence',
+  description "Don't worry about it. It's not important.",
+has scenery;
+
+!----------------------------------------
+! Walls
+!----------------------------------------
+Object "walls" room23
+with
+  name 'walls',
+  description "They're covered by a veil of mist. There's nothing important about the walls.",
+has scenery pluralname;
+
+!----------------------------------------
+! Huge spider
+!----------------------------------------
+!Combine with item15
+Object spider "spider"
+with
+  article "a huge",
+  short_name
+  [;
+    if (self has general)
+      print "dead ";
+    rfalse;
+  ],
+  name 'huge' 'spider',
+  description
+  [;
+    print "It's not very different from the spiders on Earth or on Thalos, but it's really huge. ";
+    if (self has general)
+      "It's now dead and lying on its back, exposing its abdomen.";
+    "Also, it's very aggressive.";
+  ],
+  life
+  [;
+    ThrowAt:
+			if((noun == knife) && (knife in player))
+      {
+        move knife to location;
+        "You throw the knife at the spider, but the only result you achieve is losing the knife";
+      }
+      if (knife notin player)
+        "You don't have the knife with you.";
+  ],
+  before
+  [;
+    Attack, Shoot:
+      if (self has general)
+        "The spider is already dead.";
+      if (second == knife)
+        <<Cut self>>;
+      give self general;
+      StopDaemon(self);
+      if (second == nothing && pistol in player)
+      {
+        print "(with the pistol)^";
+        second = pistol;
+      }
+      "You shoot at the huge spider a few times, screaming in fear at such a horrid sight, until you realise it's not moving any more. The spider now lies on its back, dead, exposing its abdomen.";
+    Cut:
+      if (knife notin player)
+        "You don't have anything to cut the spider with. ";
+      "The knife is a short range weapon, not suitable to deal with such a powerful creature.";
+    Take:
+      "Nope!";
+  ],
+  daemon
+  [;
+    switch (self.time_left++)
+    {
+      2: "^The spider seems to study you, savouring its next meal.";
+      3: "^The spider gets closer, and it's horrible.";
+      4: "^The spider is preparing to attack.";
+      5: deadflag = 1;
+        "^First blocking you with its front legs, and then piercing you with its second pair, the spider thrusts itself upon you. You can't escape it, and you're still alive when it starts eating you.";
+    }
+  ],
+  time_left 0,
+  add_to_scope abdomen,
+has animate neuter;
+
+!----------------------------------------
+! Abdomen
+!----------------------------------------
+Object abdomen "abdomen"
+with
+  article "the",
+  name 'abdomen' 'of' 'spider',
+  description
+  [;
+    if (spider hasnt general)
+      "You can't reach the abdomen of the spider while it's still alive and standing on its legs.";
+    print "The spider's abdomen is now exposed and ";
+    if (self hasnt general)
+      "it seems to contain something.";
+    "cut open.";
+  ],
+  before
+  [;
+    Attack, Shoot:
+      if (spider hasnt general)
+        "The abdomen is not in your line of sight, so you can't shoot it.";
+      "The abdomen seems to contain something that you may not want to damage.";
+    Cut:
+      if (spider hasnt general)
+        "You can't cut it while the spider is still alive.";
+      if (self hasnt general)
+      {
+        if (knife notin player)
+          print_ret (string)NEED_PROPER_TOOL;
+        if (second == nothing && knife in player)
+        {
+          print "(with the knife)^";
+          second = knife;
+        }
+        give self general;
+        move plate to location;
+        "Using the makeshift knife, you cut the spider's abdomen. It's a disgusting task, but in the end you find a small metal plate bearing the logo of the Discovery on it. The plate falls on the ground and you can now take it.";
+      }
+      "You've already cut it. Don't bother with that any more.";
+    Search:
+      "It's rather disgusting.";
+  ],
+has scenery;
+
+!----------------------------------------
+! Metal plate
+!----------------------------------------
+Object plate "metal plate" !item11
+with
+  name 'small' 'metal' 'plate',
+  description "It's a small plate, roughly the size of an identity card, that you found inside the spider's abdomen. It has the logo of the Discovery on it.",
+has;
+
+!----------------------------------------
+! Shockproof container
+!----------------------------------------
+Object shockproof_container "shockproof container" room23
+with
+  name 'shockproof' 'container' 'small' 'suitcase' 'case',
+  description
+  [;
+    print "It's a shockproof container, shaped like a small suitcase. ";
+    if (self hasnt general)
+      "It probably contains what the scientist came here to find.";
+    "It contains a few specimens. Just what you need to finally produce a vaccine for the plague.";
+  ],
+  before
+  [;
+    Close:
+      "It's already closed.";
+    Open:
+      give self general;
+      "You open the container, to verify what's in it. When you see the specimens and realise they're what you came here for, you close the container to preserve its contents.";
+    Shoot:
+      "I don't think it's a smart move shooting it.";
+  ],
+has container openable;
+
+!========================================
+! Room 24: Patch of Burn Trees
+!========================================
+Object room24 "Patch of Burnt Trees"
+with
+  description "This patch of burnt trees is what's left after a wildfire started, possibly due to a thunderstrike. Burnt tree stumps point towards the air like accusing fingers. Once you're done here, you can go back to where you came from by going west.",
+  w_to room20,
+  cant_go "You can't go that way, as the burnt trees prevent any movement in that direction.",
+has light;
+
+!----------------------------------------
+! Patch of Burnt Trees
+!----------------------------------------
+Object "patch" room24
+with
+  name 'patch' 'of' 'burnt' 'trees',
+  description "It extends in every direction, but the only way back is towards the west.",
+has scenery;
+
+!----------------------------------------
+! Tree stumps
+!----------------------------------------
+Object "stumps" room24
+with
+  name 'tree' 'stumps',
+  description "The tree stumps point towards the air like accusing fingers. ",
+has scenery;
+
+!----------------------------------------
+! natural charcoal
+!----------------------------------------
+Object charcoal "natural charcoal" room24
+with
+  article "some",
+  name 'natural' 'charcoal',
+  description "It's natural charcoal, produced as the result of burnt trees. You can add it to other materials to produce an explosive.",
+has;
+
+!========================================
+! Limbo
+!========================================
+Object limbo;
+
+!========================================
+! Printing rules
+!========================================
+[ consultWord word i;
+  for (i=0:i<WordLength(word):i++)
+    print (char)LowerCase(WordAddress(word)->i);
+];
+
+[ DoesntOrDont obj;
+  if (obj has pluralname)
+    print "don't";
+  else
+    print "doesn't";
+];
+
+[ firstConsultWord word i;
+  for (i=0:i<WordLength(word):i++)
+    if (i == 0)
+      print (char)UpperCase(WordAddress(word)->i);
+    else
+      print (char)LowerCase(WordAddress(word)->i);
+];
+
+!========================================
+! Other routines
+!========================================
+[ _UpdateDarkness p_silent _ceil _old_darkness _darkness;
+  if (location == thedark)
+    _old_darkness = true;
+  _ceil = ScopeCeiling(player);
+  if (_LookForLightInObj(_ceil, _ceil) == false)
+    _darkness = true;
+  if (_darkness ~= _old_darkness)
+    scope_modified = true;
+  if (_darkness)
+    location = thedark;
+  else
+    location = real_location;
+  if (_darkness ~= _old_darkness && p_silent == false)
+  {
+    new_line;
+    <Look>;
+  }
+];
+
+[ CantBeShot;
+  if (noun == player)
+    "Are you feeling suicidal?";
+  rfalse;
+];
+
+[ DropAll x next_obj;
+    x = child(player);
+
+    while (x ~= 0) {
+        next_obj = sibling(x);
+        if ((x hasnt worn) && (x ~= pistol))
+          move x to location;
+        x = next_obj;
+    }
+];
+
+[ LowerCase c; ! for ZSCII matching ISO 8859-1
+  switch (c)
+  {
+    'A' to 'Z': c = c + 32;
+    202, 204, 212, 214, 221: c--;
+    217, 218: c = c - 2;
+    158 to 160, 167, 168, 208 to 210: c = c - 3;
+    186 to 190, 196 to 200: c = c - 5 ;
+    175 to 180: c = c - 6;
+  }
+  return c;
+];
+
+[ UpperCase c; ! for ZSCII matching ISO 8859-1
+  switch (c)
+  {
+    'a' to 'z': c = c - 32;
+    201, 203, 211, 213, 220: c++;
+    215, 216: c = c + 2;
+    155 to 157, 164, 165, 205 to 207: c = c + 3;
+    181 to 185, 191 to 195: c = c + 5 ;
+    169 to 174: c = c + 6;
+  }
+  return c;
+];
+
+!========================================
+! Grammar
+!========================================
+Extend 'ask'
+  * 'about' topic -> AskAbout;
+
+Extend 'cut' first
+  * noun 'with' held -> Cut;
+
+Extend 'feed' first
+    * noun 'with' noun -> Give reverse;
+
+Extend 'lock' first
+  * noun -> Lock;
+
+Extend 'look'
+  * 'into' noun -> Search
+  * 'behind'/'under' noun -> LookUnder;
+
+Extend 'read' first
+  * noun -> Read;
+
+Extend only 'say' first
+  * topic -> Say;
+
+Extend only 'speak' replace
+  * -> Talk
+  * creature -> Talk
+  * noun -> Talk
+  * 'to'/'with' creature -> Talk
+  * 'to'/'with' noun -> Talk
+  * 'to'/'with' creature 'about' topic -> Ask
+  * 'to'/'with' noun 'about' topic -> Ask;
+
+Extend 'unlock' first
+  * noun -> Unlock;
+
+Verb meta 'about' 'info'
+  * -> About;
+
+Verb meta 'credits'
+  * -> Credits;
+
+Verb meta 'help' 'instructions'
+  * -> Help;
+
+Verb 'dismount'
+  * -> Exit
+  * creature -> Exit;
+
+Verb 'hint' 'clue'
+  * -> Hint;
+
+Verb 'inspect' = 'examine';
+
+Verb 'load'
+  * noun -> Load
+  * noun 'with' held -> Load;
+
+Verb 'mount' 'ride'
+  * -> Mount
+  * creature -> Mount;
+
+Verb 'shoot'
+  * -> Shoot
+  !* held -> Shoot
+  !* 'with' held -> Shoot
+  * noun -> Shoot
+  * noun 'with' held -> Shoot
+  * 'at' noun -> Shoot
+  * 'at' noun 'with' held -> Shoot
+  * held 'at' noun -> Shoot reverse;
+
+Verb 'talk' 'babble' 'chat' 'communicate' 'converse' 'gab' 'gossip'
+  * -> Talk
+  * creature -> Talk
+  * noun -> Talk
+  * 'to'/'with' creature -> Talk
+  * 'to'/'with' noun -> Talk
+  * 'to'/'with' creature 'about' topic -> Ask
+  * 'to'/'with' noun 'about' topic -> Ask;
+
+Verb 'untie' 'disconnect' 'detach' 'unfasten'
+  * noun -> Untie
+  * noun 'from' noun -> Untie;
+
+Verb 'use'
+  * noun -> Use;
+
+Verb 'xyzzy' 'plover' 'plugh' 'yoho'
+  * -> MagicWord;
+
+!========================================
+! Actions
+!========================================
+[ AboutSub;
+  print "This game is an adaptation of the Italian adventure 'Morgan Tyler: Naufragio su Guyoth' by Bonaventura Di Bello. It was originally written using The Quill and Illustrator and published by Edizioni Hobby S.r.l. on the cover tape of 'Explorer', no. 9, July/August 1987 for the Commodore 64 and MSX.^^The data was extracted from the C64 version using UnQuill, translated to English and rewritten for a modern audience with the original author's permission. The new version includes many enhancements that weren't in the original. The coding was done using Inform 6 and the PunyInform library.^^";
+  <<Credits>>;
+];
+
+[ AskAboutSub x count npc;
+  objectloop (x in location && x has animate && x ~= player)
+  {
+    count++;
+    npc = x;
+  }
+  if (count == 0)
+    "There's no one here to answer your questions.";
+  if (count == 1)
+    <<Ask npc noun>>;
+  "As there are multiple characters here, you'll have to specify who to ask, e.g. ASK MAN ABOUT DOG.";
+];
+
+[ CreditsSub;
+  "Concept by Gian Paolo Gentili.^Original game design and coding by Bonaventura Di Bello.^English translation and game skeleton by Garry Francis.^Game redesign and coding by Gianluca Girelli.^Play testing by Garry Francis, Larry Horsfield and Pablo Martinez.";
+];
+
+!Delete GoSub if diagonal directions are used
+[ GoSub _prop;
+  if (selected_direction == ne_to or nw_to or se_to or sw_to)
+    "There are no diagonal directions in this game.";
+  _prop = selected_direction;
+#Iftrue RUNTIME_ERRORS > RTE_MINIMUM;
+  if (_prop == 0)
+    return _RunTimeError(ERR_INVALID_DIR_PROP);
+#Endif;
+  return GoDir(_prop);
+];
+
+[ HelpSub;
+  "Tell me what to do using simple commands starting with a verb.^^Use LOOK (or L) to refresh the location description. Identify all the objects in the description and EXAMINE (or X) each one. Read responses carefully for hints.^^Use compass directions (N, S, E, W, U and D) to move around. Draw a map as you go.^^Use GET or TAKE to take objects and DROP to drop them again. Use WEAR to wear things like clothing and REMOVE to remove anything that's currently worn. Use INVENTORY (or I) to see what you're carrying and wearing.^^Use AGAIN (or G) to repeat the last command.^^Use UNDO to undo the last command if you make a mistake.^^Use SAVE to save the game and RESTORE to restore it again.^^There are over 100 verbs that you can use, so if something doesn't work, try a different verb or a different way of doing things. Use HINT if you get stuck.^^For full instructions, see the game page at <https://bdb-project.itch.io/shipwreck-on-guyoth-iv>.";
+];
+
+[ HintSub;
+  "Examine everything you find and draw a map.";
+];
+
+[ LoadSub;
+  if (ObjectIsUntouchable(noun))
+    rtrue;
+  "That would be a neat trick.";
+];
+
+[ LockSub k;
+  if (ObjectIsUntouchable(noun))
+    rtrue;
+  if (noun hasnt lockable)
+  {
+    PrintMsg(MSG_LOCK_NOT_A_LOCK, 'lock');
+    rtrue;
+  }
+  if (noun has locked)
+  {
+    PrintMsg(MSG_LOCK_ALREADY_LOCKED);
+    rtrue;
+  }
+  if (noun has open)
+  {
+    PrintMsg(MSG_LOCK_CLOSE_FIRST);
+    rtrue;
+  }
+  k = RunRoutines(noun, with_key);
+  if (k == nothing)
+    "You can't see how to lock ", (ItOrThem)noun, ".";
+  if (second == nothing && k ~= nothing && k in player)
+  {
+    second = k;
+    print "(with ", (the)second, ")^";
+  }
+  if (second == nothing)
+    "You don't have the key.";
+  if (second ~= k)
+  {
+    PrintMsg(MSG_LOCK_KEY_DOESNT_FIT);
+    rtrue;
+  }
+  give noun locked;
+  run_after_routines_msg = MSG_LOCK_DEFAULT;
+  run_after_routines_arg_1 = 'lock';
+];
+
+[ LookUnderSub;
+  if (location == thedark)
+    "But it's dark.";
+  "You find nothing of interest.";
+];
+
+[ MagicWordSub;
+  "As you recite the magic word, the plump face of a nerdy programmer appears and says, ~No, no no, that's an old magic word. It's been changed for security reasons.~ Damn programmer! Why does he always have to ruin everything?";
+];
+
+[ MountSub;
+  if (noun == nothing && trisaurus in location)
+    noun = trisaurus;
+  if (noun == nothing)
+    "You need to be more specific.";
+  if (ObjectIsUntouchable(noun))
+    rtrue;
+  <<Enter noun>>;
+];
+
+[ ReadSub;
+  if (ObjectIsUntouchable(noun))
+    rtrue;
+  "There's nothing legible on ", (ThatOrThose)noun, ".";
+];
+
+[ SaySub i;
+  if (consult_words == 0)
+    "You have nothing to say.";
+  print "~";
+  i = consult_from;
+  print (firstConsultWord)i++;
+  while (i < consult_from + consult_words)
+    print " ", (consultWord)i++;
+  print ".~^^";
+  wn = consult_from;
+  if (consult_words == 1 && NextWord() == 'xyzzy' or 'plover' or 'plugh' or 'yoho')
+    <<MagicWord>>;
+  if (AfterRoutines())
+    return;
+  "Nothing happens.";
+];
+
+[ ShootSub;
+  if (noun == nothing)
+    "You point your finger in the air and say, ~Bang!~";
+  if (ObjectIsUntouchable(noun))
+    rtrue;
+  if (CantBeShot())
+    rtrue;
+  "You can't just go around shooting things arbitrarily.";
+];
+
+[ TalkSub;
+  if (noun == nothing)
+    "You start talking to no one in particular.";
+  if (noun == player)
+    "You start talking to yourself, but it's a one-sided conversation.";
+  if (RunLife(noun, ##Talk))
+    rtrue;
+  print_ret (The)noun, " ", (IsOrAre)noun, " not very talkative.";
+];
+
+[ UnlockSub k;
+  if (ObjectIsUntouchable(noun))
+    rtrue;
+  if (noun hasnt lockable)
+  {
+    PrintMsg(MSG_UNLOCK_NOT_A_LOCK, 'unlock');
+    rtrue;
+  }
+  if (noun hasnt locked)
+  {
+    PrintMsg(MSG_UNLOCK_ALREADY_UNLOCKED, 'unlock');
+    rtrue;
+  }
+  k = RunRoutines(noun, with_key);
+  if (k == nothing)
+    "You can't see how to unlock ", (ItOrThem)noun, ".";
+  if (second == nothing && k ~= nothing && k in player)
+  {
+    second = k;
+    print "(with ", (the)second, ")^";
+  }
+  if (second == nothing)
+    "You don't have the key.";
+  if (second ~= k)
+  {
+    PrintMsg(MSG_UNLOCK_KEY_DOESNT_FIT);
+    rtrue;
+  }
+  give noun ~locked;
+  run_after_routines_msg = MSG_UNLOCK_DEFAULT;
+  run_after_routines_arg_1 = 'unlock';
+];
+
+[ UntieSub;
+  if (noun == nothing)
+    "What do you want to untie?";
+  if (ObjectIsUntouchable(noun))
+    rtrue;
+  "You can't untie ", (ThatOrThose)noun, ".";
+];
+
+[ UseSub;
+  if (ObjectIsUntouchable(noun))
+    rtrue;
+  "You'll have to be more explicit than that.";
+];
+
+End;
